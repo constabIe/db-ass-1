@@ -10,4 +10,3 @@ docker compose up --build -d
 
 ## Urls
 - pgadmin4: `http://localhost:70`
-- portainer: `http://localhost:9000`

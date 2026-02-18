@@ -1,70 +1,78 @@
 services:
-    postgres:
-        container_name: postgres
-        image: postgres:18.2-alpine3.23
-        volumes:
-            - ./docker/postgresql.conf:/etc/postgresql.conf:ro
-            - postgres_data:/var/lib/postgresql/data
-        environment:
-            POSTGRES_DB: ${POSTGRES_DB}
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            PGDATA: /var/lib/postgresql/data/pgdata
-        command: >
-            postgres -c config_file=/etc/postgresql.conf
-        ports:
-            - ${POSTGRES_PORT}:${POSTGRES_PORT}
-        networks:
-            - postgres
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 3s
-        deploy:
-            resources:
-                limits:
-                    cpus: "1"
-                    memory: 20G
-        restart: unless-stopped
+  postgres:
+    container_name: postgres
+    image: postgres:18.2-alpine3.23
+    volumes:
+      - ./docker/postgresql.conf:/etc/postgresql.conf:ro
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: >
+      postgres -c config_file=/etc/postgresql.conf
+    ports:
+      - ${POSTGRES_PORT}:5432
+    networks:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 20G
+    restart: unless-stopped
 
-    pgadmin:
-        image: dpage/pgadmin4:9.12
-        container_name: pgadmin
-        volumes:
-            - pgadmin_data:/var/lib/pgadmin
-        environment:
-            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-            PGADMIN_CONFIG_SERVER_MODE: "False"
-        deploy:
-            resources:
-                limits:
-                    cpus: "0.5"
-                    memory: 1G
-        ports:
-            - ${PGADMIN_PORT}:80
-        networks:
-            - postgres
-        restart: unless-stopped
+  pgadmin:
+    image: dpage/pgadmin4:9.12
+    container_name: pgadmin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+    ports:
+      - ${PGADMIN_PORT}:80
+    networks:
+      - postgres
+    restart: unless-stopped
 
-    portainer:
-        image: portainer/portainer-ce:alpine-sts
-        container_name: portainer
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - portainer_data:/data
-        ports:
-            - "${PORTAINER_PORT}:9000"
-            - "${PORTAINER_EDGE_PORT}:8000"
-        restart: unless-stopped
+  flyway:
+    image: flyway/flyway
+    container_name: flyway
+    volumes:
+      - ./migrations:/flyway/sql
+    networks:
+      - postgres
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${POSTGRES_DB} 
+      -user=${POSTGRES_USER} 
+      -password=${POSTGRES_PASSWORD} 
+      -schemas=public
+      -locations=filesystem:/flyway/sql 
+      -connectRetries=60
+      migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
 
 volumes:
-    postgres_data:
-    pgadmin_data:
-    portainer_data:
+  postgres_data:
+  pgadmin_data:
 
 networks:
-    postgres:
-        driver: bridge
+  postgres:
+    driver: bridge

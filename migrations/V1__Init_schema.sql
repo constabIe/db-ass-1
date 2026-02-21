@@ -1,9 +1,9 @@
 -- Each department has at least one doctor.
 CREATE TABLE department (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    building_no VARCHAR(20)  NOT NULL,
-    room_no     VARCHAR(20)  NOT NULL
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL,
+    building_number VARCHAR(20)  NOT NULL,
+    room_number     VARCHAR(20)  NOT NULL
 );
 
 -- Each doctor is assigned to exactly one department.

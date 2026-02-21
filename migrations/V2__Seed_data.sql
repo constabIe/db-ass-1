@@ -1,7 +1,7 @@
 -- =========================
 -- Departments (12 rows)
 -- =========================
-INSERT INTO department (name, building_no, room_no) VALUES
+INSERT INTO department (name, building_number, room_number) VALUES
     ('Cardiology',       'A', '101'),
     ('Neurology',        'A', '207'),
     ('Orthopedics',      'B', '314'),
